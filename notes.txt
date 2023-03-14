@@ -1,0 +1,13 @@
+- could add in redo typing in order to complete a race where a mistake has occurred
+
+- show currently used username and password
+- generate new username and password
+- clear usernames and passwords
+- retry typing button
+- slider for typing speed
+- checkbox for continuous loop
+- new game
+- call a function for race now with a boolean value for whether to loop or not
+
+- have a variable that is the amount of speed between presses in milliseconds
+- progress bar for current race
