@@ -18,14 +18,19 @@ class Nitro_Bot():
         # credentials info
         self.userinfo = "userinfo.txt"
         self.users = dict()
+        self.login_saved = True
         
         # typing info
-        self.time_between_key_presses = 500 # in milliseconds
+        self.time_between_key_presses = 250 # in milliseconds
         self.words = []
         
         # session info
         self.session = False
         self.driver = None
+
+        # racing info
+        self.currently_racing = False
+        self.auto_race = False
 
         # open user info file, create if does not exist
         userinfofile = open(self.userinfo, "r+")
@@ -49,9 +54,12 @@ class Nitro_Bot():
         time.sleep(3)
         self.session = True
         
-
-    def destroy(self):
-        self.driver.close()
+    # write user info to file
+    def write_users(self):
+        # save to file
+        userinfo = open(self.userinfo, "w")
+        for user in self.users.keys():
+            userinfo.write(f"{user},{self.users[user]}\n")
 
     def write_char(self, char, actions):
         # keyboard.write(char)
@@ -87,11 +95,11 @@ class Nitro_Bot():
             else:
                 password += random.choice(digits)
         
-        userfile = open(userinfo, "w+")
-        prev = userfile.read()
-        new_info = f"{username},{password}\n"
-        userfile.write(new_info + prev)
-        userfile.close()
+        # userfile = open(userinfo, "w+")
+        # prev = userfile.read()
+        # new_info = f"{username},{password}\n"
+        # userfile.write(new_info + prev)
+        # userfile.close()
         return username, password
     
     def sign_in(self, username, password):
@@ -101,8 +109,16 @@ class Nitro_Bot():
             pass
 
         try:
-            self.driver.find_element(By.ID, "username").send_keys(username)
-            self.driver.find_element(By.ID, "password").send_keys(password)
+            # locate input fields
+            u = self.driver.find_element(By.ID, "username")
+            p = self.driver.find_element(By.ID, "password")
+            
+            # clear input fields
+            u.clear()
+            p.clear()
+
+            u.send_keys(username)
+            p.send_keys(password)
         
             btns = self.driver.find_elements(By.CLASS_NAME, "btn--fw")
             for b in btns:
@@ -112,17 +128,40 @@ class Nitro_Bot():
             print("login failed")
         
     def race_now(self):
-        time.sleep(3.70)
-        try:
-            self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
-        except Exception as e:
-            if type(e) == NoSuchElementException:
-                self.sign_up()
-                self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
+        time.sleep(2.5)
+        first_time = True
         
-        time.sleep(12)
-        self.locate_words()
-        self.bot_thread(self.type_words)
+        self.currently_racing = True
+
+        # while loop for auto racing
+        while first_time or self.auto_race:
+            first_time = False
+            try:
+                # self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
+                btns = self.driver.find_elements(By.CLASS_NAME, "well--s")
+                for b in btns:
+                    if b.text == "Race Now" or b.text == "Race Again": 
+                        b.click()
+                actions = ActionChains(self.driver)
+                actions.send_keys(Keys.RETURN).perform()
+            except Exception as e:
+                if type(e) == NoSuchElementException:
+                    print("racing failed")
+                    # self.sign_up()
+                    self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
+        
+            while True:
+                try:
+                    self.driver.find_element(By.CLASS_NAME, "dash-letter")
+                    time.sleep(4)
+                    break
+                except:
+                    pass
+
+            self.locate_words()
+            self.bot_thread(self.type_words)
+            time.sleep(30)
+        self.currently_racing = False
 
     def locate_words(self):
         self.words = self.driver.find_elements(By.CLASS_NAME, "dash-word")
@@ -141,12 +180,28 @@ class Nitro_Bot():
     def update_speed(self, speed):
         self.time_between_key_presses = speed
 
+    def save_login(self, username, password):
+        self.users[username] = password
+
+    def toggle_save_login(self):
+        self.login_saved = not self.login_saved
+
     def bot_thread(self, function, *args):
         thread = threading.Thread(target=function, args=args)
         thread.start()
+    
+    def toggle_auto(self):
+        self.auto_race = not self.auto_race
 
+    # def automatic_racing(self):
+    #     while self.auto_race:
+    #         print("an iteration of automatic racing has been started.")
+    #         thread = threading.Thread(target=self.bot_thread, args=(self.race_now,))
+    #         thread.start()
+    #         thread.join()
+            
 if __name__ == "__main__":
     bot = Nitro_Bot()
-    bot.sign_in()
+    bot.sign_in("Troy75318", bot.users["Troy75318"])
+    print(bot.generate_new_login_info("test"))
     keyboard.wait('esc')
-    bot.destroy()
