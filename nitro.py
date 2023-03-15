@@ -16,7 +16,7 @@ class Nitro_Bot():
         self.nitro_url = "https://nitrotype.com"
         
         # credentials info
-        self.userinfo = "userinfo1.txt"
+        self.userinfo = "userinfo.txt"
         self.users = dict()
         self.login_saved = True
         
