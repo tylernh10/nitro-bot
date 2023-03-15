@@ -16,7 +16,7 @@ class Nitro_Bot():
         self.nitro_url = "https://nitrotype.com"
         
         # credentials info
-        self.userinfo = "userinfo.txt"
+        self.userinfo = "userinfo1.txt"
         self.users = dict()
         self.login_saved = True
         
@@ -33,14 +33,13 @@ class Nitro_Bot():
         self.auto_race = False
 
         # open user info file, create if does not exist
-        userinfofile = open(self.userinfo, "r+")
+        userinfofile = open(self.userinfo, "a+")
+        userinfofile.seek(0)
         for line in userinfofile.readlines():
             info = line.split(',')
             u = info[0].strip()
             p = info[1].strip()
             self.users[u] = p
-        # self.username = "Troy75318"
-        # self.password = self.users[self.username]
 
     def initialize_driver(self):
         # no session until initialization happens
@@ -69,11 +68,11 @@ class Nitro_Bot():
     # called if the signin info is invalid
     def sign_up(self, username, password):
         self.driver.find_element(By.XPATH, "//*[text()='Sign Up Now!']").click()
-        # self.username, self.password = self.generate_new_login_info(self.userinfo)
 
+        # you must play
         time.sleep(12)
         self.locate_words()
-        self.type_words()
+        self.bot_thread(self.type_words)
         time.sleep(12)
         
         # get signin elements and populate
@@ -94,12 +93,6 @@ class Nitro_Bot():
                 password += random.choice(ascii_letters)
             else:
                 password += random.choice(digits)
-        
-        # userfile = open(userinfo, "w+")
-        # prev = userfile.read()
-        # new_info = f"{username},{password}\n"
-        # userfile.write(new_info + prev)
-        # userfile.close()
         return username, password
     
     def sign_in(self, username, password):
@@ -136,6 +129,7 @@ class Nitro_Bot():
         # while loop for auto racing
         while first_time or self.auto_race:
             first_time = False
+
             try:
                 # self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
                 btns = self.driver.find_elements(By.CLASS_NAME, "well--s")
@@ -143,13 +137,13 @@ class Nitro_Bot():
                     if b.text == "Race Now" or b.text == "Race Again": 
                         b.click()
                 actions = ActionChains(self.driver)
+                
+                # pressing enter will play a new game after completing one
                 actions.send_keys(Keys.RETURN).perform()
             except Exception as e:
                 if type(e) == NoSuchElementException:
                     print("racing failed")
-                    # self.sign_up()
-                    self.driver.find_element(By.XPATH, "//*[text()='Race Now']").click()
-        
+                
             while True:
                 try:
                     self.driver.find_element(By.CLASS_NAME, "dash-letter")
@@ -192,16 +186,7 @@ class Nitro_Bot():
     
     def toggle_auto(self):
         self.auto_race = not self.auto_race
-
-    # def automatic_racing(self):
-    #     while self.auto_race:
-    #         print("an iteration of automatic racing has been started.")
-    #         thread = threading.Thread(target=self.bot_thread, args=(self.race_now,))
-    #         thread.start()
-    #         thread.join()
             
 if __name__ == "__main__":
     bot = Nitro_Bot()
-    bot.sign_in("Troy75318", bot.users["Troy75318"])
-    print(bot.generate_new_login_info("test"))
     keyboard.wait('esc')
